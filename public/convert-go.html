@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
+
+</head>
+<body>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload</button>
+    <ul id="fileList"></ul>
+    <script>
+        let endpoint = 'http://localhost:8080/convert'
+
+        function uploadFile()
+        {
+            let fileInput = document.getElementById('fileInput');
+            let file      = fileInput.files[0];
+            const reader  = new FileReader();
+            reader.onload = function(event) {
+                const content = event.target.result;
+
+                // Compress using pako
+                const compressedContent = pako.gzip(content);
+
+                // Create a FormData to send the file with the name: 'file'
+                const formData = new FormData();
+                formData.append('file', new Blob([compressedContent], { type: 'application/octet-stream' }), 'file');
+
+                // Send 'formData' to server via AJAX (using jQuery)
+                $.ajax({
+                    url: endpoint,
+                    type: 'POST',
+                    data: formData,
+                    crossDomain: true, // Allow cross-domain requests
+                    xhrFields: {
+                        withCredentials: false // Don't send credentials
+                    },
+                    processData: false, // Avoid jQuery to process the data
+                    contentType: false, // Define the type of content as 'multipart/form-data'
+                    success: function(response) {
+
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao fazer o POST:', error);
+                    }
+                });
+            };
+
+            // Read file as an ArrayBuffer
+            reader.readAsArrayBuffer(file);
+        }
+
+    </script>
+</body>
+</html>
